@@ -5,11 +5,6 @@ from duckietown.dtros import DTROS, NodeType
 from sensor_msgs.msg import CompressedImage
 import os
 
-'''
-Basic code for a node was taken from
-Unit C-2: Development in the Duckietown infrastructure, Hands-on Robotics Development using Duckietown
-Link: https://docs.duckietown.org/daffy/duckietown-robotics-development/out/dt_infrastructure.html
-'''
 class AprilTagNode(DTROS):
   def __init__(self, node_name):
     # initialize the DTROS parent class
