@@ -1,47 +1,31 @@
-# Template: template-ros
+# Exercise 3: Computer Vision for Robotics
 
-This template provides a boilerplate repository
-for developing ROS-based software in Duckietown.
+This repository contains implementation solutions for exercise 3. For information about the project, please read the report at: [insert report here]
 
-**NOTE:** If you want to develop software that does not use
-ROS, check out [this template](https://github.com/duckietown/template-basic).
+## Structure
 
+### Augmented Reality
 
-## How to use it
+Most of the source code is in the `packages/augmented_reality/src` directory. Here is a brief description of each file:
 
-### 1. Fork this repository
+- `packages/augmented_reality/src/led_server.py`: Implements a node that starts up an LED server. This service changes the color of the LED lights according to a string message containing the color.
 
-Use the fork button in the top-right corner of the github page to fork this template repository.
+## Execution:
 
+To execute this project, comment/uncomment the nodes you would like to launch in the `packages/mypackage/launch/multiple_nodes.py` launch file. Currently, it is set to start an LED service, as well as a node that implements the Multi-State task from part 2. To run the program, ensure that the variable `$BOT` store your robot's host name, and run the following commands:
 
-### 2. Create a new repository
+```
+dts devel build -f -H $BOT
+dts devel run -H $BOT
+```
 
-Create a new repository on github.com while
-specifying the newly forked template repository as
-a template for your new repository.
+## Credit:
 
+This code is built from the 412 exercise 3 template that provides a boilerplate repository for developing ROS-based software in Duckietown (https://github.com/wagonhelm/cmput412_exercise3).
 
-### 3. Define dependencies
+Build on top of by Nadeen Mohamed and Celina Sheng.
 
-List the dependencies in the files `dependencies-apt.txt` and
-`dependencies-py3.txt` (apt packages and pip packages respectively).
+Code was also borrowed (and cited in-code) from the following sources.
 
-
-### 4. Place your code
-
-Place your code in the directory `/packages/` of
-your new repository.
-
-
-### 5. Setup launchers
-
-The directory `/launchers` can contain as many launchers (launching scripts)
-as you want. A default launcher called `default.sh` must always be present.
-
-If you create an executable script (i.e., a file with a valid shebang statement)
-a launcher will be created for it. For example, the script file 
-`/launchers/my-launcher.sh` will be available inside the Docker image as the binary
-`dt-launcher-my-launcher`.
-
-When launching a new container, you can simply provide `dt-launcher-my-launcher` as
-command.
+- https://docs.duckietown.org/daffy/duckietown-robotics-development/out/dt_infrastructure.html
+- https://github.com/Coral79/exA-3/blob/44adf94bad728507608086b91fbf5645fc22555f/packages/augmented_reality_basics/include/augmented_reality_basics/augmented_reality_basics.py
