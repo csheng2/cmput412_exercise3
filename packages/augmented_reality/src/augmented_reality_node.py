@@ -24,9 +24,7 @@ class AugmentedRealityNode(DTROS):
 
     # Get points and segments from map file
     self._points = rospy.get_param('~points')
-    print(self._points)
     self._segments = rospy.get_param('~segments')
-    print(self._segments)
 
     # TODO: get map file base name
     map_file_base_name = 'hud'
@@ -71,7 +69,6 @@ Link: https://github.com/Coral79/exA-3/blob/44adf94bad728507608086b91fbf5645fc22
 ''' 
 class Augmenter():
   def __init__(self, homography, camera_info_msg):
-    # print(homography)
     self.H = [homography[0:3], homography[3:6], homography[6:9]]
     self.Hinv = np.linalg.inv(self.H)
     self.camera_info_msg = camera_info_msg
@@ -102,7 +99,6 @@ class Augmenter():
 
     pixel = image_point[0:2]
     pixel = np.round(pixel).astype(int)
-    print (pixel, image_point)
     return pixel
 
   def render_segments(self, points, img, segments):

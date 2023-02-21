@@ -8,11 +8,16 @@ This repository contains implementation solutions for exercise 3. For informatio
 
 Most of the source code is in the `packages/augmented_reality/src` directory. Here is a brief description of each file:
 
-- `packages/augmented_reality/src/led_server.py`: Implements a node that starts up an LED server. This service changes the color of the LED lights according to a string message containing the color.
+- `packages/augmented_reality/src/augmented_reality.py`: Implements a node that subscribes to the camera stream, obtains transformations for the stream based on the homography matrix obtained from extrinsic calibration, draws points on the camera based on the transformations and a map file, and publishes the superimposed image.
 
 ## Execution:
 
-To execute this project, comment/uncomment the nodes you would like to launch in the `packages/mypackage/launch/multiple_nodes.py` launch file. Currently, it is set to start an LED service, as well as a node that implements the Multi-State task from part 2. To run the program, ensure that the variable `$BOT` store your robot's host name, and run the following commands:
+To execute this project, comment/uncomment the packages you would like to launch in the `launchers/default.sh` script.
+
+(TODO: edit this)
+Currently, it is set to start an LED service, as well as a node that implements the Multi-State task from part 2.
+
+To run the program, ensure that the variable `$BOT` stores your robot's host name, and run the following commands:
 
 ```
 dts devel build -f -H $BOT
