@@ -19,12 +19,14 @@ class AugmentedRealityNode(DTROS):
 
     # Get static parameters
     calibration_file = f'/data/config/calibrations/camera_extrinsic/{self.veh_name}.yaml'
-    self.homography = self.readYamlFile(calibration_file)
+    self.homography = self.readYamlFile(calibration_file)['homography']
     self.camera_info_msg = rospy.wait_for_message(f'/{self.veh_name}/camera_node/camera_info', CameraInfo)
 
     # Get points and segments from map file
     self._points = rospy.get_param('~points')
+    print(self._points)
     self._segments = rospy.get_param('~segments')
+    print(self._segments)
 
     # TODO: get map file base name
     map_file_base_name = 'hud'
@@ -69,6 +71,7 @@ Link: https://github.com/Coral79/exA-3/blob/44adf94bad728507608086b91fbf5645fc22
 ''' 
 class Augmenter():
   def __init__(self, homography, camera_info_msg):
+    # print(homography)
     self.H = [homography[0:3], homography[3:6], homography[6:9]]
     self.Hinv = np.linalg.inv(self.H)
     self.camera_info_msg = camera_info_msg
