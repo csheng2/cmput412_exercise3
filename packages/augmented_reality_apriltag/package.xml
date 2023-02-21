@@ -2,9 +2,10 @@
   <name>augmented_reality_apriltag</name>
   <version>0.1.0</version>
   <description>
-  This package is used to do stuffs for the exercise CRA1 .
+  This package is used to do stuff for the exercise CRA1 .
   </description>
-  <maintainer email="youremail@something.hello">YOUR NAME</maintainer>
+  <maintainer email='nadeen@ualberta.ca'>Nadeen Mohamed</maintainer>
+  <maintainer email='csheng2@ualberta.ca'>Celina Sheng</maintainer>
   <license>None</license>
 
   <buildtool_depend>catkin</buildtool_depend>
