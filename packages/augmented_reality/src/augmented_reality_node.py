@@ -71,25 +71,27 @@ class Augmenter():
   def __init__(self, homography, camera_info_msg):
     self.H = [homography[0:3], homography[3:6], homography[6:9]]
     self.Hinv = np.linalg.inv(self.H)
-    self.camera_info_msg = camera_info_msg
-    self.K = np.array(self.camera_info_msg.K).reshape((3, 3))
-    self.R = np.array(self.camera_info_msg.R).reshape((3, 3))
-    self.D = np.array(self.camera_info_msg.D[0:4])
-    self.P = np.array(self.camera_info_msg.P).reshape((3, 4))
+    self.K = np.array(camera_info_msg.K).reshape((3, 3))
+    self.R = np.array(camera_info_msg.R).reshape((3, 3))
+    self.D = np.array(camera_info_msg.D[0:4])
+    self.P = np.array(camera_info_msg.P).reshape((3, 4))
     self.h = camera_info_msg.height
     self.w = camera_info_msg.width
 
   def process_image(self, cv_image_raw):
-    ''' Undistort an image.
     '''
-    newcameramtx, roi=cv2.getOptimalNewCameraMatrix(self.K, self.D, (self.w, self.h), 0, (self.w, self.h)) # 自由比例参数
-    res = cv2.undistort(cv_image_raw, self.K, self.D, None, newcameramtx)       
-    #res = cv2.fisheye.undistortImage(cv_image_raw, self.K, self.D,self.R, self.K)
+    Undistort an image.
+    '''
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.K, self.D, (self.w, self.h), 0, (self.w, self.h))
+    res = cv2.undistort(cv_image_raw, self.K, self.D, None, newcameramtx)
     return res
 
   def ground2pixel(self, point):
-    if point[2]!= 0:
-      msg = 'This method assumes that the point is a ground point (z=0). '
+    '''
+    Transforms points in ground coordinates (i.e. the robot reference frame) to pixels in the image.
+    '''
+    if len(point) > 2 and point[2] != 0:
+      msg = 'This method assumes that the point is a ground point (z=0).'
       msg += 'However, the point is (%s,%s,%s)' % (point.x, point.y, point.z)
       raise ValueError(msg)
 
@@ -108,7 +110,6 @@ class Augmenter():
       point_x = self.ground2pixel(point_x)
       point_y = self.ground2pixel(point_y)
       color = segments[i]["color"]
-      line_thickness = 2
       img = self.draw_segment(img, point_x, point_y, color)
     return img
 
@@ -122,7 +123,7 @@ class Augmenter():
       'cyan': ['rgb', [0, 1, 1]],
       'white': ['rgb', [1, 1, 1]],
       'black': ['rgb', [0, 0, 0]]}
-    _color_type, [r, g, b] = defined_colors[color]
+    _, [r, g, b] = defined_colors[color]
     cv2.line(image, (pt_x[0], pt_x[1]), (pt_y[0], pt_y[1]), (b * 255, g * 255, r * 255), 5)
     return image
 

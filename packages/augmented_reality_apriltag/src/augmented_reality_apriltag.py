@@ -4,10 +4,11 @@ from renderClass import Renderer
 import rospy
 import yaml
 from duckietown.dtros import DTROS, NodeType
-from cv_bridge import CvBridgeError
+from duckietown_msgs.msg import LEDPattern
+from std_msgs.msg import Header, ColorRGBA
+from cv_bridge import CvBridgeError, CvBridge
 
 import rospkg 
-
 
 """
   Template code was taken from
@@ -16,7 +17,6 @@ import rospkg
 """
 
 class ARNode(DTROS):
-
   def __init__(self, node_name):
 
     # Initialize the DTROS parent class
@@ -26,11 +26,25 @@ class ARNode(DTROS):
     rospack = rospkg.RosPack()
     # Initialize an instance of Renderer giving the model in input.
     self.renderer = Renderer(rospack.get_path('augmented_reality_apriltag') + '/src/models/duckie.obj')
-
+    self.bridge = CvBridge()
     #
     #   Write your code here
     #
 
+    # Initialize LED color-changing
+    self.color_publisher = rospy.Publisher(f'/{self.veh_name}/led_emitter_node/led_pattern', LEDPattern, queue_size = 1)
+    self.pattern = LEDPattern()
+    self.pattern.header = Header()
+    self.colors = {
+      'purple': {'r': 1.0, 'g': 0.0, 'b': 1.0, 'a': 1.0},
+      'blue': {'r': 0.0, 'g': 0.0, 'b': 1.0, 'a': 1.0},
+      'cyan': {'r': 0.0, 'g': 1.0, 'b': 1.0, 'a': 1.0},
+      'red': {'r': 1.0, 'g': 0.0, 'b': 0.0, 'a': 1.0},
+      'green': {'r': 0.0, 'g': 1.0, 'b': 0.0, 'a': 1.0},
+      'yellow': {'r': 1.0, 'g': 1.0, 'b': 0.0, 'a': 1.0},
+      'white': {'r': 1.0, 'g': 1.0, 'b': 1.0, 'a': 1.0},
+      'off': {'r': 0.0, 'g': 0.0, 'b': 0.0, 'a': 0.0}
+    }
     
   def projection_matrix(self, intrinsic, homography):
     """
@@ -74,10 +88,27 @@ class ARNode(DTROS):
         rospy.signal_shutdown()
         return
 
-
   def onShutdown(self):
     super(ARNode, self).onShutdown()
 
+  def change_color(self, color):
+    '''
+    Code for this function was inspired by 
+    "duckietown/dt-core", file "led_emitter_node.py"
+    Link: https://github.com/duckietown/dt-core/blob/daffy/packages/led_emitter/src/led_emitter_node.py
+    Author: GitHub user liampaull
+    '''
+    if color not in self.colors:
+      color = 'white' # default color
+
+    self.pattern.header.stamp = rospy.Time.now()
+    rgba = ColorRGBA()
+    rgba.r = self.colors[color]['r']
+    rgba.g = self.colors[color]['g']
+    rgba.b = self.colors[color]['b']
+    rgba.a = self.colors[color]['a']
+    self.pattern.rgb_vals = [rgba] * 5
+    self.color_publisher.publish(self.pattern)
 
 if __name__ == '__main__':
   # Initialize the node
