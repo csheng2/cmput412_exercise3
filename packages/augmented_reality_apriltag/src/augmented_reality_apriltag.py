@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 from renderClass import Renderer
-
 import rospy
 import yaml
 from duckietown.dtros import DTROS, NodeType
 from duckietown_msgs.msg import LEDPattern
 from std_msgs.msg import Header, ColorRGBA
 from cv_bridge import CvBridgeError, CvBridge
-
-import rospkg 
+from sensor_msgs.msg import CompressedImage, CameraInfo
+import rospkg
 
 """
   Template code was taken from
@@ -21,15 +20,19 @@ class ARNode(DTROS):
 
     # Initialize the DTROS parent class
     super(ARNode, self).__init__(node_name=node_name,node_type=NodeType.GENERIC)
-    self.veh = rospy.get_namespace().strip("/")
+    self.veh_name = rospy.get_namespace().strip("/")
+
+    # Get static parameters
+    extrinsic_calibration_file = f'/data/config/calibrations/camera_extrinsic/{self.veh_name}.yaml'
+    intrinsic_calibration_file = f'/data/config/calibrations/camera_intrinsic/{self.veh_name}.yaml'
+    self.homography = self.readYamlFile(extrinsic_calibration_file)['homography']
+    self.intrinstic = self.readYamlFile(intrinsic_calibration_file)
+    self.camera_info_msg = rospy.wait_for_message(f'/{self.veh_name}/camera_node/camera_info', CameraInfo)
 
     rospack = rospkg.RosPack()
     # Initialize an instance of Renderer giving the model in input.
     self.renderer = Renderer(rospack.get_path('augmented_reality_apriltag') + '/src/models/duckie.obj')
     self.bridge = CvBridge()
-    #
-    #   Write your code here
-    #
 
     # Initialize LED color-changing
     self.color_publisher = rospy.Publisher(f'/{self.veh_name}/led_emitter_node/led_pattern', LEDPattern, queue_size = 1)
@@ -45,16 +48,25 @@ class ARNode(DTROS):
       'white': {'r': 1.0, 'g': 1.0, 'b': 1.0, 'a': 1.0},
       'off': {'r': 0.0, 'g': 0.0, 'b': 0.0, 'a': 0.0}
     }
-    
-  def projection_matrix(self, intrinsic, homography):
+
+
+  def projection_matrix(self):
     """
       Write here the compuatation for the projection matrix, namely the matrix
       that maps the camera reference frame to the AprilTag reference frame.
     """
+    projection_matrix = []
+    data = self.intrinstic['projection_matrix']['data']
+    cols = self.intrinstic['projection_matrix']['cols']
+    rows = self.intrinstic['projection_matrix']['rows']
 
-    #
-    # Write your code here
-    #
+    for r in range(0, rows):
+      row = []
+      for c in range(0, cols):
+        row.append(data[r*cols + c])      
+      projection_matrix.append(row)
+    
+    return projection_matrix
 
   def readImage(self, msg_image):
     """
@@ -109,6 +121,7 @@ class ARNode(DTROS):
     rgba.a = self.colors[color]['a']
     self.pattern.rgb_vals = [rgba] * 5
     self.color_publisher.publish(self.pattern)
+
 
 if __name__ == '__main__':
   # Initialize the node
