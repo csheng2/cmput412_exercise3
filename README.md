@@ -33,6 +33,8 @@ Build on top of by Nadeen Mohamed and Celina Sheng.
 Code was also borrowed (and cited in-code) from the following sources.
 
 - https://docs.duckietown.org/daffy/duckietown-robotics-development/out/dt_infrastructure.html
+- https://docs.duckietown.org/daffy/duckietown-classical-robotics/out/cra_basic_augmented_reality_exercise.html
+- https://github.com/duckietown/dt-core/blob/daffy/packages/apriltag/src/apriltag_detector_node.py
 - https://github.com/Coral79/exA-3/blob/44adf94bad728507608086b91fbf5645fc22555f/packages/augmented_reality_basics/include/augmented_reality_basics/augmented_reality_basics.py
 - https://github.com/duckietown-ethz/cra1-template/blob/master/packages/augmented_reality_apriltag/src/renderClass.py
 - https://github.com/duckietown/dt-core/blob/daffy/packages/led_emitter/src/led_emitter_node.py

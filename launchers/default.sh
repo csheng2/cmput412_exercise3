@@ -15,7 +15,8 @@ dt-launchfile-init
 # launching app
 # dt-exec roslaunch led_emitter led_emitter_node.launch veh:=csc229XX
 # dt-exec roslaunch duckietown_demos deadreckoning.launch
-dt-exec roslaunch augmented_reality augmented_reality.launch veh:=$VEHICLE_NAME map_file:=lane
+# dt-exec roslaunch augmented_reality augmented_reality.launch veh:=$VEHICLE_NAME map_file:=lane
+dt-exec roslaunch augmented_reality_apriltag augmented_reality_apriltag.launch veh:=$VEHICLE_NAME
 
 # ----------------------------------------------------------------------------
 # YOUR CODE ABOVE THIS LINE

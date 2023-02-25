@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   cv_bridge
   duckietown_msgs
+  geometry_msgs
 )
 
 catkin_package()

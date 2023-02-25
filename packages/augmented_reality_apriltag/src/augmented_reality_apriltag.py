@@ -1,38 +1,50 @@
 #!/usr/bin/env python3
-from renderClass import Renderer
-import rospy
-import yaml
-from duckietown.dtros import DTROS, NodeType
-from duckietown_msgs.msg import LEDPattern
-from std_msgs.msg import Header, ColorRGBA
-from cv_bridge import CvBridgeError, CvBridge
+import rospy, cv2, tf
+import numpy as np
+
+from duckietown.dtros import DTROS, NodeType, TopicType
+from cv_bridge import CvBridge
+from dt_apriltags import Detector
+from turbojpeg import TurboJPEG, TJPF_GRAY
+from image_geometry import PinholeCameraModel
+
+from duckietown_msgs.msg import LEDPattern, AprilTagDetectionArray, AprilTagDetection
 from sensor_msgs.msg import CompressedImage, CameraInfo
-import rospkg
+from std_msgs.msg import Header, ColorRGBA
+from geometry_msgs.msg import Transform, Vector3, Quaternion
 
 """
-  Template code was taken from
-  Github, "cra1-template", author github user viciopoli01
-  Link: https://github.com/duckietown-ethz/cra1-template/blob/master/packages/augmented_reality_apriltag/src/augmented_reality_apriltag.py
+  Much of the code for this apriltag detection class was taken from
+  apriltag_detector_node.py, in duckietown/dt-core Github repo
+  Authors: afdaniele, CourchesneA, AndreaCensi
+  Link: https://github.com/duckietown/dt-core/blob/daffy/packages/apriltag/src/apriltag_detector_node.py
 """
-
 class ARNode(DTROS):
   def __init__(self, node_name):
-
     # Initialize the DTROS parent class
     super(ARNode, self).__init__(node_name=node_name,node_type=NodeType.GENERIC)
     self.veh_name = rospy.get_namespace().strip("/")
 
     # Get static parameters
-    extrinsic_calibration_file = f'/data/config/calibrations/camera_extrinsic/{self.veh_name}.yaml'
-    intrinsic_calibration_file = f'/data/config/calibrations/camera_intrinsic/{self.veh_name}.yaml'
-    self.homography = self.readYamlFile(extrinsic_calibration_file)['homography']
-    self.intrinstic = self.readYamlFile(intrinsic_calibration_file)
-    self.camera_info_msg = rospy.wait_for_message(f'/{self.veh_name}/camera_node/camera_info', CameraInfo)
-
-    rospack = rospkg.RosPack()
-    # Initialize an instance of Renderer giving the model in input.
-    self.renderer = Renderer(rospack.get_path('augmented_reality_apriltag') + '/src/models/duckie.obj')
     self.bridge = CvBridge()
+    self.tag_size = 0.065
+    self.rectify_alpha = 0.0
+    
+    # Initialize static parameters from camera info message
+    camera_info_msg = rospy.wait_for_message(f'/{self.veh_name}/camera_node/camera_info', CameraInfo)
+    self.camera_model = PinholeCameraModel()
+    self.camera_model.fromCameraInfo(camera_info_msg)
+    H, W = camera_info_msg.height, camera_info_msg.width
+    # find optimal rectified pinhole camera
+    rect_K, _ = cv2.getOptimalNewCameraMatrix(
+      self.camera_model.K, self.camera_model.D, (W, H), self.rectify_alpha
+    )
+    # store new camera parameters
+    self._camera_parameters = (rect_K[0, 0], rect_K[1, 1], rect_K[0, 2], rect_K[1, 2])
+    # create rectification map
+    self._mapx, self._mapy = cv2.initUndistortRectifyMap(
+      self.camera_model.K, self.camera_model.D, None, rect_K, (W, H), cv2.CV_32FC1
+    )
 
     # Initialize LED color-changing
     self.color_publisher = rospy.Publisher(f'/{self.veh_name}/led_emitter_node/led_pattern', LEDPattern, queue_size = 1)
@@ -49,56 +61,102 @@ class ARNode(DTROS):
       'off': {'r': 0.0, 'g': 0.0, 'b': 0.0, 'a': 0.0}
     }
 
+    # Create a CV bridge object
+    self._jpeg = TurboJPEG()
 
-  def projection_matrix(self):
-    """
-      Write here the compuatation for the projection matrix, namely the matrix
-      that maps the camera reference frame to the AprilTag reference frame.
-    """
-    projection_matrix = []
-    data = self.intrinstic['projection_matrix']['data']
-    cols = self.intrinstic['projection_matrix']['cols']
-    rows = self.intrinstic['projection_matrix']['rows']
+    # Initialize detector
+    self.at_detector = Detector(
+      searchpath = ['apriltags'],
+      families = 'tag36h11',
+      nthreads = 1,
+      quad_decimate = 1.0,
+      quad_sigma = 0.0,
+      refine_edges = 1,
+      decode_sharpening = 0.25,
+      debug = 0
+    )
 
-    for r in range(0, rows):
-      row = []
-      for c in range(0, cols):
-        row.append(data[r*cols + c])      
-      projection_matrix.append(row)
+    # Subscriber
+    self.image_sub = rospy.Subscriber(f'/{self.veh_name}/camera_node/image/compressed', CompressedImage, self.image_cb, queue_size = 1)
+
+    # Publisher
+    self.image_pub = rospy.Publisher(
+      f"/{self.veh_name}/detections/image/compressed",
+      CompressedImage,
+      queue_size = 1,
+      dt_topic_type = TopicType.VISUALIZATION,
+      dt_help = "Camera image with tag publishs superimposed",
+    )
+  
+  def image_cb(self, msg):
+    '''
+    Callback for compressed camera images
+    '''
+    # turn image message into grayscale image
+    img = self._jpeg.decode(msg.data, pixel_format=TJPF_GRAY)
+    # run input image through the rectification map
+    img = cv2.remap(img, self._mapx, self._mapy, cv2.INTER_NEAREST)
+    # detect tags
+    tags = self.at_detector.detect(img, True, self._camera_parameters, self.tag_size)
+    # pack detections into a message
+    tags_msg = AprilTagDetectionArray()
+    tags_msg.header.stamp = msg.header.stamp
+    tags_msg.header.frame_id = msg.header.frame_id
+    for tag in tags:
+      # turn rotation matrix into quaternion
+      q = _matrix_to_quaternion(tag.pose_R)
+      p = tag.pose_t.T[0]
+      # create single tag detection object
+      detection = AprilTagDetection(
+        transform=Transform(
+          translation=Vector3(x=p[0], y=p[1], z=p[2]),
+          rotation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
+        ),
+        tag_id=tag.tag_id,
+        tag_family=str(tag.tag_family),
+        hamming=tag.hamming,
+        decision_margin=tag.decision_margin,
+        homography=tag.homography.flatten().astype(np.float32).tolist(),
+        center=tag.center.tolist(),
+        corners=tag.corners.flatten().tolist(),
+        pose_error=tag.pose_err,
+      )
+      # add detection to array
+      tags_msg.detections.append(detection)
     
-    return projection_matrix
+    # render visualization (if needed)
+    self._render_detections(msg, img, tags)
+    
+  def _render_detections(self, msg, img, detections):
+    # get a color buffer from the BW image
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    # draw each tag
+    for detection in detections:
+      for idx in range(len(detection.corners)):
+        cv2.line(
+          img,
+          tuple(detection.corners[idx - 1, :].astype(int)),
+          tuple(detection.corners[idx, :].astype(int)),
+          (0, 255, 0),
+        )
+      # draw the tag ID
+      cv2.putText(
+        img,
+        str(detection.tag_id),
+        org=(detection.corners[0, 0].astype(int) + 10, detection.corners[0, 1].astype(int) + 10),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=0.8,
+        color=(0, 0, 255),
+      )
+    # pack image into a message
+    img_msg = CompressedImage()
+    img_msg.header.stamp = msg.header.stamp
+    img_msg.header.frame_id = msg.header.frame_id
+    img_msg.format = "jpeg"
+    img_msg.data = self._jpeg.encode(img)
 
-  def readImage(self, msg_image):
-    """
-      Convert images to OpenCV images
-      Args:
-        msg_image (:obj:`CompressedImage`) the image from the camera node
-      Returns:
-        OpenCV image
-    """
-    try:
-      cv_image = self.bridge.compressed_imgmsg_to_cv2(msg_image)
-      return cv_image
-    except CvBridgeError as e:
-      self.log(e)
-      return []
-
-  def readYamlFile(self,fname):
-    """
-      Reads the 'fname' yaml file and returns a dictionary with its input.
-
-      You will find the calibration files you need in:
-      `/data/config/calibrations/`
-    """
-    with open(fname, 'r') as in_file:
-      try:
-        yaml_dict = yaml.load(in_file)
-        return yaml_dict
-      except yaml.YAMLError as exc:
-        self.log("YAML syntax error. File: %s fname. Exc: %s"
-          %(fname, exc), type='fatal')
-        rospy.signal_shutdown()
-        return
+    # publish image
+    self.image_pub.publish(img_msg)
 
   def onShutdown(self):
     super(ARNode, self).onShutdown()
@@ -122,6 +180,10 @@ class ARNode(DTROS):
     self.pattern.rgb_vals = [rgba] * 5
     self.color_publisher.publish(self.pattern)
 
+def _matrix_to_quaternion(r):
+  T = np.array(((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 1)), dtype=np.float64)
+  T[0:3, 0:3] = r
+  return tf.transformations.quaternion_from_matrix(T)
 
 if __name__ == '__main__':
   # Initialize the node
