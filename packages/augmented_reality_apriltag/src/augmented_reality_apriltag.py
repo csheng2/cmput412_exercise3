@@ -50,15 +50,23 @@ class ARNode(DTROS):
     self.color_publisher = rospy.Publisher(f'/{self.veh_name}/led_emitter_node/led_pattern', LEDPattern, queue_size = 1)
     self.pattern = LEDPattern()
     self.pattern.header = Header()
-    self.colors = {
-      'purple': {'r': 1.0, 'g': 0.0, 'b': 1.0, 'a': 1.0},
-      'blue': {'r': 0.0, 'g': 0.0, 'b': 1.0, 'a': 1.0},
-      'cyan': {'r': 0.0, 'g': 1.0, 'b': 1.0, 'a': 1.0},
-      'red': {'r': 1.0, 'g': 0.0, 'b': 0.0, 'a': 1.0},
-      'green': {'r': 0.0, 'g': 1.0, 'b': 0.0, 'a': 1.0},
-      'yellow': {'r': 1.0, 'g': 1.0, 'b': 0.0, 'a': 1.0},
-      'white': {'r': 1.0, 'g': 1.0, 'b': 1.0, 'a': 1.0},
-      'off': {'r': 0.0, 'g': 0.0, 'b': 0.0, 'a': 0.0}
+
+    # Map of April tag id to color
+    self.curr_id = 'none'
+    self.last_id = 'none'
+    self.id_color_map = {
+      '169': {'r': 1.0, 'g': 0.0, 'b': 0.0, 'a': 1.0}, # Stop - Red
+      '162': {'r': 1.0, 'g': 0.0, 'b': 0.0, 'a': 1.0}, # Stop - Red
+      '153': {'r': 0.0, 'g': 0.0, 'b': 1.0, 'a': 1.0}, # T-intersection - Blue
+      '133': {'r': 0.0, 'g': 0.0, 'b': 1.0, 'a': 1.0}, # T-intersection - Blue
+      '62': {'r': 0.0, 'g': 0.0, 'b': 1.0, 'a': 1.0}, # T-intersection - Blue
+      '58': {'r': 0.0, 'g': 0.0, 'b': 1.0, 'a': 1.0}, # T-intersection - Blue
+      '94': {'r': 0.0, 'g': 1.0, 'b': 0.0, 'a': 1.0}, # UofA tag - Green
+      '93': {'r': 0.0, 'g': 1.0, 'b': 0.0, 'a': 1.0}, # UofA tag - Green
+      '201': {'r': 0.0, 'g': 1.0, 'b': 0.0, 'a': 1.0}, # UofA tag - Green
+      '200': {'r': 0.0, 'g': 1.0, 'b': 0.0, 'a': 1.0}, # UofA tag - Green
+      'other': {'r': 1.0, 'g': 1.0, 'b': 0.0, 'a': 0.0}, # Other tag - Yellow
+      'none': {'r': 1.0, 'g': 1.0, 'b': 1.0, 'a': 1.0} # No detections - white
     }
 
     # Create a CV bridge object
@@ -85,7 +93,7 @@ class ARNode(DTROS):
       CompressedImage,
       queue_size = 1,
       dt_topic_type = TopicType.VISUALIZATION,
-      dt_help = "Camera image with tag publishs superimposed",
+      dt_help = "Camera image with tags superimposed",
     )
   
   def image_cb(self, msg):
@@ -130,6 +138,9 @@ class ARNode(DTROS):
   def _render_detections(self, msg, img, detections):
     # get a color buffer from the BW image
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    # if we have no detections
+    if len(detections) == 0:
+      self.curr_id = 'none'
     # draw each tag
     for detection in detections:
       for idx in range(len(detection.corners)):
@@ -148,6 +159,10 @@ class ARNode(DTROS):
         fontScale=0.8,
         color=(0, 0, 255),
       )
+      if str(detection.tag_id) in self.id_color_map:
+        self.curr_id = str(detection.tag_id)
+      else:
+        self.curr_id = 'other'
     # pack image into a message
     img_msg = CompressedImage()
     img_msg.header.stamp = msg.header.stamp
@@ -168,17 +183,26 @@ class ARNode(DTROS):
     Link: https://github.com/duckietown/dt-core/blob/daffy/packages/led_emitter/src/led_emitter_node.py
     Author: GitHub user liampaull
     '''
-    if color not in self.colors:
-      color = 'white' # default color
-
     self.pattern.header.stamp = rospy.Time.now()
     rgba = ColorRGBA()
-    rgba.r = self.colors[color]['r']
-    rgba.g = self.colors[color]['g']
-    rgba.b = self.colors[color]['b']
-    rgba.a = self.colors[color]['a']
+    rgba.r = color['r']
+    rgba.g = color['g']
+    rgba.b = color['b']
+    rgba.a = color['a']
     self.pattern.rgb_vals = [rgba] * 5
     self.color_publisher.publish(self.pattern)
+  
+  def run(self):
+    # Start at no detections
+    self.change_color(self.id_color_map['none'])
+
+    rate = rospy.Rate(10) # 10 times a second
+
+    while not rospy.is_shutdown():
+      if self.curr_id != self.last_id:
+        self.change_color(self.id_color_map[self.curr_id])
+        self.curr_id = self.last_id
+      rate.sleep()
 
 def _matrix_to_quaternion(r):
   T = np.array(((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 1)), dtype=np.float64)
@@ -187,6 +211,8 @@ def _matrix_to_quaternion(r):
 
 if __name__ == '__main__':
   # Initialize the node
-  camera_node = ARNode(node_name='augmented_reality_apriltag_node')
+  ar_node = ARNode(node_name='augmented_reality_apriltag_node')
+  # Run LED task
+  ar_node.run()
   # Keep it spinning to keep the node alive
   rospy.spin()
