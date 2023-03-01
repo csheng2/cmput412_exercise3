@@ -24,6 +24,8 @@ class StaticTF2BroadcasterNode(DTROS):
       broadcaster = StaticTransformBroadcaster()
       static_transformStamped = TransformStamped()
 
+      print(sys.argv)
+
       static_transformStamped.header.stamp = rospy.Time.now()
       static_transformStamped.header.frame_id = "world"
       static_transformStamped.child_frame_id = sys.argv[1]
