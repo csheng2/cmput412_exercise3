@@ -93,6 +93,19 @@ class DeadReckoningNode(DTROS):
     # tf broadcaster for odometry TF
     self._tf_broadcaster = TransformBroadcaster()
 
+    self.april_tags = [
+      {"x": 0.17, "y": 0.17, "id": 200},
+      {"x": 1.65, "y": 0.17, "id": 201},
+      {"x": 1.65, "y": 2.84, "id": 94},
+      {"x": 0.17, "y": 2.84, "id": 93},
+      {"x": 1.75, "y": 1.252, "id": 153},
+      {"x": 1.253, "y": 1.755, "id": 133},
+      {"x": 0.574, "y": 1.259, "id": 58},
+      {"x": 0.075, "y": 1.755, "id": 62},
+      {"x": 0.574, "y": 1.755, "id": 169},
+      {"x": 1.253, "y": 1.253, "id": 162}
+    ]
+
     self.loginfo("Initialized")
 
   def cb_ts_encoders(self, left_encoder, right_encoder):
