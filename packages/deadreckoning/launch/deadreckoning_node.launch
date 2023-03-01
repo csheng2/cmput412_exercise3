@@ -13,5 +13,15 @@
             <rosparam command="load"
                 file="$(find deadreckoning)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
         </node>
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_200_static" args="0.17 0.17 0 0 0 0 1 200 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_201_static" args="1.65 0.17 0 0 0 0 1 201 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_94_static" args="1.65 2.84 0 0 0 0 1 94 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_93_static" args="0.17 2.84 0 0 0 0 1 93 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_153_static" args="1.75 1.252 0 0 0 0 1 153 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_133_static" args="1.253 1.755 0 0 0 0 1 133 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_58_static" args="0.574 1.259 0 0 0 0 1 58 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_62_static" args="0.075 1.755 0 0 0 0 1 62 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_169_static" args="0.574 1.755 0 0 0 0 1 169 odometry" />
+        <node pkg="$(arg pkg_name)" type="static_transform_publisher.py" name="at_162_static" args="1.253 1.253 0 0 0 0 1 162 odometry" />
     </group>
 </launch>
