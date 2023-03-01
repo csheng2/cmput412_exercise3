@@ -8,7 +8,7 @@ from geometry_msgs.msg import Quaternion, Twist, Pose, Point, Vector3, Transform
 
 from duckietown.dtros import DTROS, NodeType
 from duckietown_msgs.msg import WheelEncoderStamped
-from tf2_ros import TransformBroadcaster
+from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 
 from tf import transformations as tr
 
@@ -92,6 +92,8 @@ class DeadReckoningNode(DTROS):
     self._print_every_sec = 30
     # tf broadcaster for odometry TF
     self._tf_broadcaster = TransformBroadcaster()
+
+    self.initialize_ats()
 
     self.loginfo("Initialized")
 
@@ -211,6 +213,30 @@ class DeadReckoningNode(DTROS):
         ),
       )
     )
+
+  def publish_static_transform(self, frame_id, child_frame_id, x, y, z, yaw):
+    broadcaster = StaticTransformBroadcaster()
+    static_transformStamped = TransformStamped()
+
+    static_transformStamped.header.stamp = rospy.Time.now()
+    static_transformStamped.header.frame_id = frame_id
+    static_transformStamped.child_frame_id = child_frame_id
+
+    static_transformStamped.transform.translation.x = float(x)
+    static_transformStamped.transform.translation.y = float(y)
+    static_transformStamped.transform.translation.z = float(z)
+
+    quat = tr.quaternion_from_euler(0, 0, yaw)
+    static_transformStamped.transform.rotation.x = quat[0]
+    static_transformStamped.transform.rotation.y = quat[1]
+    static_transformStamped.transform.rotation.z = quat[2]
+    static_transformStamped.transform.rotation.w = quat[3]
+
+    broadcaster.sendTransform(static_transformStamped)
+
+  def initialize_ats(self):
+    for tag in self.april_tags:
+      self.publish_static_transform("world", "odometry", tag['x'], tag['y'], 0, 0)
 
   @staticmethod
   def angle_clamp(theta):

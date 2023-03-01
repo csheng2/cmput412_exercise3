@@ -43,6 +43,7 @@ class StaticTF2BroadcasterNode(DTROS):
       broadcaster.sendTransform(static_transformStamped)
 
 if __name__ == '__main__':
+  
   # create node
   node = StaticTF2BroadcasterNode("static_tf2_broadcaster_node")
   rospy.spin()
