@@ -4,19 +4,17 @@ import numpy as np
 
 from duckietown.dtros import DTROS, NodeType, TopicType
 from cv_bridge import CvBridge
-from turbojpeg import TurboJPEG, TJPF_GRAY
+from turbojpeg import TurboJPEG
 from image_geometry import PinholeCameraModel
 
-from duckietown_msgs.msg import Twist2DStamped, LEDPattern, AprilTagDetectionArray, AprilTagDetection
+from duckietown_msgs.msg import Twist2DStamped
 from sensor_msgs.msg import CompressedImage, CameraInfo
-from std_msgs.msg import Header, ColorRGBA
-# from geometry_msgs.msg import Twist
+from std_msgs.msg import Header
 
 """
-  Much of the code for this apriltag detection class was taken from
-  apriltag_detector_node.py, in duckietown/dt-core Github repo
-  Authors: afdaniele, CourchesneA, AndreaCensi
-  Link: https://github.com/duckietown/dt-core/blob/daffy/packages/apriltag/src/apriltag_detector_node.py
+  Much of the code for this lane following class was taken from
+  Turtlebot Line Follower, in Gaitech docs
+  Link: http://edu.gaitech.hk/turtlebot/line-follower.html
 """
 class LaneFollowingNode(DTROS):
   def __init__(self, node_name):

@@ -38,3 +38,4 @@ Code was also borrowed (and cited in-code) from the following sources.
 - https://github.com/Coral79/exA-3/blob/44adf94bad728507608086b91fbf5645fc22555f/packages/augmented_reality_basics/include/augmented_reality_basics/augmented_reality_basics.py
 - https://github.com/duckietown-ethz/cra1-template/blob/master/packages/augmented_reality_apriltag/src/renderClass.py
 - https://github.com/duckietown/dt-core/blob/daffy/packages/led_emitter/src/led_emitter_node.py
+- http://edu.gaitech.hk/turtlebot/line-follower.html
