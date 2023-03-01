@@ -19,12 +19,11 @@ class StaticTF2BroadcasterNode(DTROS):
       if sys.argv[1] == 'world':
         rospy.logerr('Your static turtle name cannot be "world"')
         sys.exit(0)
-
-      rospy.init_node('my_static_tf2_broadcaster')
+      
       broadcaster = StaticTransformBroadcaster()
       static_transformStamped = TransformStamped()
 
-      print(sys.argv)
+      print('argv:', sys.argv)
 
       static_transformStamped.header.stamp = rospy.Time.now()
       static_transformStamped.header.frame_id = "world"
