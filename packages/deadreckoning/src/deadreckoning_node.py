@@ -248,7 +248,7 @@ class DeadReckoningNode(DTROS):
 
   def initialize_ats(self):
     for tag in self._april_tags:
-      self.publish_static_transform("world", "odometry", tag['x'], tag['y'], 0, 0)
+      self.publish_static_transform("world", f"at_{str(tag.id)}_static", tag['x'], tag['y'], 0, 0)
 
   @staticmethod
   def angle_clamp(theta):
