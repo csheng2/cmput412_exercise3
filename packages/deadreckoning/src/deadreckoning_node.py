@@ -247,7 +247,7 @@ class DeadReckoningNode(DTROS):
     broadcaster.sendTransform(static_transformStamped)
 
   def initialize_ats(self):
-    for tag in self.april_tags:
+    for tag in self._april_tags:
       self.publish_static_transform("world", "odometry", tag['x'], tag['y'], 0, 0)
 
   @staticmethod
