@@ -93,19 +93,19 @@ class DeadReckoningNode(DTROS):
     # tf broadcaster for odometry TF
     self._tf_broadcaster = TransformBroadcaster()
 
-    self._april_tags = [
-      {"x": 0.17, "y": 0.17, "id": 200},
-      {"x": 1.65, "y": 0.17, "id": 201},
-      {"x": 1.65, "y": 2.84, "id": 94},
-      {"x": 0.17, "y": 2.84, "id": 93},
-      {"x": 1.75, "y": 1.252, "id": 153},
-      {"x": 1.253, "y": 1.755, "id": 133},
-      {"x": 0.574, "y": 1.259, "id": 58},
-      {"x": 0.075, "y": 1.755, "id": 62},
-      {"x": 0.574, "y": 1.755, "id": 169},
-      {"x": 1.253, "y": 1.253, "id": 162}
-    ]
-    self.initialize_ats()
+    # self._april_tags = [
+    #   {"x": 0.17, "y": 0.17, "id": 200},
+    #   {"x": 1.65, "y": 0.17, "id": 201},
+    #   {"x": 1.65, "y": 2.84, "id": 94},
+    #   {"x": 0.17, "y": 2.84, "id": 93},
+    #   {"x": 1.75, "y": 1.252, "id": 153},
+    #   {"x": 1.253, "y": 1.755, "id": 133},
+    #   {"x": 0.574, "y": 1.259, "id": 58},
+    #   {"x": 0.075, "y": 1.755, "id": 62},
+    #   {"x": 0.574, "y": 1.755, "id": 169},
+    #   {"x": 1.253, "y": 1.253, "id": 162}
+    # ]
+    # self.initialize_ats()
 
     self.loginfo("Initialized")
 
@@ -248,7 +248,7 @@ class DeadReckoningNode(DTROS):
 
   def initialize_ats(self):
     for tag in self._april_tags:
-      self.publish_static_transform("world", f"at_{str(tag.id)}_static", tag['x'], tag['y'], 0, 0)
+      self.publish_static_transform(self.origin_frame, f"at_{str(tag['id'])}_static", tag['x'], tag['y'], 0, 0)
 
   @staticmethod
   def angle_clamp(theta):
