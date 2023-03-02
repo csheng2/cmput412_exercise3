@@ -105,7 +105,6 @@ class DeadReckoningNode(DTROS):
     #   {"x": 0.574, "y": 1.755, "id": 169},
     #   {"x": 1.253, "y": 1.253, "id": 162}
     # ]
-    # self.initialize_ats()
 
     self.loginfo("Initialized")
 
@@ -225,30 +224,6 @@ class DeadReckoningNode(DTROS):
         ),
       )
     )
-
-  def publish_static_transform(self, frame_id, child_frame_id, x, y, z, yaw):
-    broadcaster = StaticTransformBroadcaster()
-    static_transformStamped = TransformStamped()
-
-    static_transformStamped.header.stamp = rospy.Time.now()
-    static_transformStamped.header.frame_id = frame_id
-    static_transformStamped.child_frame_id = child_frame_id
-
-    static_transformStamped.transform.translation.x = float(x)
-    static_transformStamped.transform.translation.y = float(y)
-    static_transformStamped.transform.translation.z = float(z)
-
-    quat = tr.quaternion_from_euler(0, 0, yaw)
-    static_transformStamped.transform.rotation.x = quat[0]
-    static_transformStamped.transform.rotation.y = quat[1]
-    static_transformStamped.transform.rotation.z = quat[2]
-    static_transformStamped.transform.rotation.w = quat[3]
-
-    broadcaster.sendTransform(static_transformStamped)
-
-  def initialize_ats(self):
-    for tag in self._april_tags:
-      self.publish_static_transform(self.origin_frame, f"at_{str(tag['id'])}_static", tag['x'], tag['y'], 0, 0)
 
   @staticmethod
   def angle_clamp(theta):
