@@ -8,7 +8,7 @@ from geometry_msgs.msg import Quaternion, Twist, Pose, Point, Vector3, Transform
 
 from duckietown.dtros import DTROS, NodeType
 from duckietown_msgs.msg import WheelEncoderStamped
-from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
+from tf2_ros import TransformBroadcaster
 
 from tf import transformations as tr
 
@@ -56,10 +56,10 @@ class DeadReckoningNode(DTROS):
 
     # Current pose, forward velocity, and angular rate
     self.timestamp = None
-    self.x = 0.0
-    self.y = 0.0
+    self.x = 0.32
+    self.y = 0.32
     self.z = 0.0
-    self.yaw = 0.0
+    self.yaw = math.pi/2
     self.q = [0.0, 0.0, 0.0, 1.0]
     self.tv = 0.0
     self.rv = 0.0
