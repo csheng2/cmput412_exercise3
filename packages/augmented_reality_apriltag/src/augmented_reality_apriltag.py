@@ -148,8 +148,8 @@ class ARNode(DTROS):
           p.tolist(),
           q.tolist(),
           msg.header.stamp,
-          "detected_location",
-          f"at_{str(tag.tag_id)}_static"
+          "tag/{:s}".format(str(tag.tag_id)),
+          msg.header.frame_id,
         )
       # add detection to array
       tags_msg.detections.append(detection)
@@ -161,7 +161,6 @@ class ARNode(DTROS):
     '''
     Callback for compressed camera images
     '''
-
     self.last_message = msg
     
   def _render_detections(self, msg, img, detections):

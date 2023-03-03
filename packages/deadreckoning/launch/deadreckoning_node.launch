@@ -14,6 +14,8 @@
                 file="$(find deadreckoning)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
         </node>
 
+        <node pkg="tf2_ros" type="static_transform_publisher" name="" args="0 0 0 0 0 0 /$(arg veh)/odometry /$(arg veh)/footprint" />
+
         <node pkg="tf2_ros" type="static_transform_publisher" name="" args="0.17 0.17 0.075 2.35619 0 -1.5708 /$(arg veh)/world at_200_static" />
         <node pkg="tf2_ros" type="static_transform_publisher" name="" args="1.65 0.17 0.075 -2.35619 0 -1.5708 /$(arg veh)/world at_201_static" />
         <node pkg="tf2_ros" type="static_transform_publisher" name="" args="1.65 2.84 0.075 -0.785398 0 -1.5708 /$(arg veh)/world at_94_static" />
