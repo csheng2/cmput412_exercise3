@@ -149,7 +149,7 @@ class ARNode(DTROS):
           q.tolist(),
           msg.header.stamp,
           "detected_location",
-          f"at_{str(tag.tag_id)}_static",
+          f"at_{str(tag.tag_id)}_static"
         )
       # add detection to array
       tags_msg.detections.append(detection)
