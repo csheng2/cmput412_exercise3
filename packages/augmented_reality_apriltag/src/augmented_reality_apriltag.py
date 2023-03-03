@@ -84,6 +84,9 @@ class ARNode(DTROS):
       debug = 0
     )
 
+    # Initialize broadcaster
+    self._tf_bcaster = tf.TransformBroadcaster()
+
     # Subscriber
     self.image_sub = rospy.Subscriber(f'/{self.veh_name}/camera_node/image/compressed', CompressedImage, self.image_cb, queue_size = 1)
 
@@ -129,6 +132,14 @@ class ARNode(DTROS):
         corners=tag.corners.flatten().tolist(),
         pose_error=tag.pose_err,
       )
+      # publish tf
+      self._tf_bcaster.sendTransform(
+          p.tolist(),
+          q.tolist(),
+          msg.header.stamp,
+          f"at_{str(tag.tag_id)}_static",
+          msg.header.frame_id,
+        )
       # add detection to array
       tags_msg.detections.append(detection)
     

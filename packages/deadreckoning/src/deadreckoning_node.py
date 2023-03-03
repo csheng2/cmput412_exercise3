@@ -177,12 +177,9 @@ class DeadReckoningNode(DTROS):
         "TV = %.2f m/s\t RV = %.2f deg/s\t DT = %.4f" % (self.tv, self.rv * 180 / math.pi, dt)
       )
 
-    dist = self.tv * dt
-    dyaw = self.rv * dt
-
     self.yaw = self.angle_clamp(self.yaw + dyaw)
-    self.x = self.x + dist * math.cos(self.yaw)
-    self.y = self.y + dist * math.sin(self.yaw)
+    self.x = self.x + distance * math.cos(self.yaw)
+    self.y = self.y + distance * math.sin(self.yaw)
     self.q = tr.quaternion_from_euler(0, 0, self.yaw)
     self.timestamp = timestamp
 
@@ -244,7 +241,6 @@ class DeadReckoningNode(DTROS):
       return theta + 2 * math.pi
     else:
       return theta
-
 
 if __name__ == "__main__":
   # create node
