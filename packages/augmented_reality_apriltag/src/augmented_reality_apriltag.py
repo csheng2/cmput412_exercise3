@@ -11,7 +11,7 @@ from image_geometry import PinholeCameraModel
 from duckietown_msgs.msg import LEDPattern, AprilTagDetectionArray, AprilTagDetection
 from sensor_msgs.msg import CompressedImage, CameraInfo
 from std_msgs.msg import Header, ColorRGBA
-from geometry_msgs.msg import Transform, Vector3, Quaternion
+from geometry_msgs.msg import Transform, Vector3, Quaternion, Pose
 
 """
   Much of the code for this apriltag detection class was taken from
@@ -104,7 +104,9 @@ class ARNode(DTROS):
     self.timer = rospy.Timer(rospy.Duration(1 / self.publish_hz), self.cb_timer)
     self.last_message = None
 
-  def cb_timer(self):
+    # self.location = rospy.Publisher(f"/{self.veh_name}/detections/image/compressed", Pose, queue_size=1)
+  
+  def cb_timer(self, _):
     '''
     Callback for timer
     '''
@@ -146,8 +148,8 @@ class ARNode(DTROS):
           p.tolist(),
           q.tolist(),
           msg.header.stamp,
+          "detected_location",
           f"at_{str(tag.tag_id)}_static",
-          msg.header.frame_id,
         )
       # add detection to array
       tags_msg.detections.append(detection)
