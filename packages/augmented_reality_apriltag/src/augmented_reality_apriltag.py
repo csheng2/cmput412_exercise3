@@ -98,11 +98,20 @@ class ARNode(DTROS):
       dt_topic_type = TopicType.VISUALIZATION,
       dt_help = "Camera image with tags superimposed",
     )
-  
-  def image_cb(self, msg):
+
+    # Timer
+    self.publish_hz = 10
+    self.timer = rospy.Timer(rospy.Duration(1 / self.publish_hz), self.cb_timer)
+    self.last_message = None
+
+  def cb_timer(self):
     '''
-    Callback for compressed camera images
+    Callback for timer
     '''
+    msg = self.last_message
+    if not msg:
+      return
+
     # turn image message into grayscale image
     img = self._jpeg.decode(msg.data, pixel_format=TJPF_GRAY)
     # run input image through the rectification map
@@ -145,6 +154,13 @@ class ARNode(DTROS):
     
     # render visualization (if needed)
     self._render_detections(msg, img, tags)
+  
+  def image_cb(self, msg):
+    '''
+    Callback for compressed camera images
+    '''
+
+    self.last_message = msg
     
   def _render_detections(self, msg, img, detections):
     # get a color buffer from the BW image
@@ -174,6 +190,7 @@ class ARNode(DTROS):
         self.curr_id = str(detection.tag_id)
       else:
         self.curr_id = 'other'
+    
     # pack image into a message
     img_msg = CompressedImage()
     img_msg.header.stamp = msg.header.stamp
@@ -224,6 +241,6 @@ if __name__ == '__main__':
   # Initialize the node
   ar_node = ARNode(node_name='augmented_reality_apriltag_node')
   # Run LED task
-  ar_node.run()
+  # ar_node.run()
   # Keep it spinning to keep the node alive
   rospy.spin()
