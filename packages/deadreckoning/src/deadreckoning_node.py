@@ -74,8 +74,10 @@ class DeadReckoningNode(DTROS):
 
     # Setup subscribers
     self.sub_encoder_left = message_filters.Subscriber("~left_wheel", WheelEncoderStamped)
-
     self.sub_encoder_right = message_filters.Subscriber("~right_wheel", WheelEncoderStamped)
+
+    # subscribe to april tag rostopic
+    self.april_tag_listener = rospy.Subscriber("location", Pose, self.cb_location)
 
     # Setup the time synchronizer
     self.ts_encoders = message_filters.ApproximateTimeSynchronizer(
@@ -107,6 +109,15 @@ class DeadReckoningNode(DTROS):
     # ]
 
     self.loginfo("Initialized")
+  
+  def cb_location(self, message):
+    self.x = message.postion.x
+    self.y = message.postion.y
+    self.z = message.postion.z
+
+    # TODO: double check if this is correct
+    self.q = message.orientation
+    self.yaw = tr.euler_from_quaternion(message.orientation)[0]
 
   def cb_ts_encoders(self, left_encoder, right_encoder):
     timestamp_now = rospy.get_time()
