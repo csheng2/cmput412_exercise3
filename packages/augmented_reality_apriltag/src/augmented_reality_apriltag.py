@@ -7,11 +7,12 @@ from cv_bridge import CvBridge
 from dt_apriltags import Detector
 from turbojpeg import TurboJPEG, TJPF_GRAY
 from image_geometry import PinholeCameraModel
+from tf2_ros import Buffer
 
 from duckietown_msgs.msg import LEDPattern, AprilTagDetectionArray, AprilTagDetection
 from sensor_msgs.msg import CompressedImage, CameraInfo
 from std_msgs.msg import Header, ColorRGBA
-from geometry_msgs.msg import Transform, Vector3, Quaternion, Pose
+from geometry_msgs.msg import Transform, Vector3, Quaternion
 
 """
   Much of the code for this apriltag detection class was taken from
@@ -104,7 +105,11 @@ class ARNode(DTROS):
     self.timer = rospy.Timer(rospy.Duration(1 / self.publish_hz), self.cb_timer)
     self.last_message = None
 
-    # self.location = rospy.Publisher(f"/{self.veh_name}/detections/image/compressed", Pose, queue_size=1)
+    # Location publisher
+    self.location_pub = rospy.Publisher("location", Transform, queue_size=1)
+
+    # Transform listener
+    self.listener = tf.TransformListener(True, rospy.Duration(10.0))
   
   def cb_timer(self, _):
     '''
@@ -145,17 +150,40 @@ class ARNode(DTROS):
       )
       # publish tf
       self._tf_bcaster.sendTransform(
-          p.tolist(),
-          q.tolist(),
-          msg.header.stamp,
-          "tag/{:s}".format(str(tag.tag_id)),
-          msg.header.frame_id,
-        )
+        p.tolist(),
+        q.tolist(),
+        msg.header.stamp,
+        "tag/{:s}".format(str(tag.tag_id)),
+        msg.header.frame_id,
+      )
+      # apply transformation
+      self.apply_transform(tag.tag_id)
       # add detection to array
       tags_msg.detections.append(detection)
     
     # render visualization (if needed)
     self._render_detections(msg, img, tags)
+
+  def apply_transform(self, tag_id):
+    try:
+      (intermediate_translation, intermediate_rotation) = self.listener.lookupTransform(f"{self.veh_name}/footprint", f"tag/{str(tag_id)}", rospy.Time(0))
+      self._tf_bcaster.sendTransform(
+        intermediate_translation,
+        intermediate_rotation,
+        rospy.Time.now(),
+        f"intermediate_tag/{str(tag_id)}",
+        f"tag/{str(tag_id)}",
+      )
+      (translation, rotation) = self.listener.lookupTransform(f"at_{str(tag_id)}_static", f"intermediate_tag/{str(tag_id)}", rospy.Time(0))
+      
+      transform = Transform(
+        translation=Vector3(x=translation[0], y=translation[1], z=translation[2]),
+        rotation=Quaternion(x=rotation[0], y=rotation[1], z=rotation[2], w=rotation[3]),
+      )
+      self.location_pub.publish(transform)
+    except Exception as e:
+      print(e)
+      return
   
   def image_cb(self, msg):
     '''

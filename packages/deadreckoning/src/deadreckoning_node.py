@@ -4,7 +4,7 @@ import time, math, rospy
 import message_filters
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Quaternion, Twist, Pose, Point, Vector3, TransformStamped, Transform
+from geometry_msgs.msg import Quaternion, Twist, Pose, Point, Vector3, Transform, TransformStamped
 
 from duckietown.dtros import DTROS, NodeType
 from duckietown_msgs.msg import WheelEncoderStamped
@@ -77,7 +77,7 @@ class DeadReckoningNode(DTROS):
     self.sub_encoder_right = message_filters.Subscriber("~right_wheel", WheelEncoderStamped)
 
     # subscribe to april tag rostopic
-    self.april_tag_listener = rospy.Subscriber("location", Pose, self.cb_location)
+    self.april_tag_listener = rospy.Subscriber("location", Transform, self.cb_location)
 
     # Setup the time synchronizer
     self.ts_encoders = message_filters.ApproximateTimeSynchronizer(
@@ -111,13 +111,12 @@ class DeadReckoningNode(DTROS):
     self.loginfo("Initialized")
   
   def cb_location(self, message):
-    self.x = message.postion.x
-    self.y = message.postion.y
-    self.z = message.postion.z
+    self.x = message.translation.x
+    self.y = message.translation.y
+    self.z = message.translation.z
 
-    # TODO: double check if this is correct
-    self.q = message.orientation
-    self.yaw = tr.euler_from_quaternion(message.orientation)[0]
+    self.q = [message.rotation.x, message.rotation.y, message.rotation.z, message.rotation.w]
+    self.yaw = tr.euler_from_quaternion(self.q)[0]
 
   def cb_ts_encoders(self, left_encoder, right_encoder):
     timestamp_now = rospy.get_time()
