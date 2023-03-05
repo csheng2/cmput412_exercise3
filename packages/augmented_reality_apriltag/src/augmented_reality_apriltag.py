@@ -166,20 +166,35 @@ class ARNode(DTROS):
 
   def apply_transform(self, tag_id):
     try:
-      (intermediate_translation, intermediate_rotation) = self.listener.lookupTransform(f"{self.veh_name}/footprint", f"tag/{str(tag_id)}", rospy.Time(0))
+      (intermediate_translation, intermediate_rotation) = self.listener.lookupTransformFull(
+        f"tag/{str(tag_id)}", 
+        rospy.Time(0),
+        "odometry",
+        rospy.Time(0),
+        "world"
+      )
+
       self._tf_bcaster.sendTransform(
         intermediate_translation,
         intermediate_rotation,
         rospy.Time.now(),
         f"intermediate_tag/{str(tag_id)}",
-        f"tag/{str(tag_id)}",
+        f"at_{str(tag_id)}_static",
       )
-      (translation, rotation) = self.listener.lookupTransform(f"at_{str(tag_id)}_static", f"intermediate_tag/{str(tag_id)}", rospy.Time(0))
+
+      (translation, rotation) = self.listener.lookupTransformFull(
+        "world",
+        rospy.Time(0),
+        f"intermediate_tag/{str(tag_id)}",
+        rospy.Time(0),
+        f"at_{str(tag_id)}_static",
+      )
       
       transform = Transform(
         translation=Vector3(x=translation[0], y=translation[1], z=translation[2]),
         rotation=Quaternion(x=rotation[0], y=rotation[1], z=rotation[2], w=rotation[3]),
       )
+
       self.location_pub.publish(transform)
     except Exception as e:
       print(e)
