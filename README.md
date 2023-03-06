@@ -2,11 +2,7 @@
 
 This repository contains implementation solutions for exercise 3. For information about the project, please read the report at:
 
-[Nadeen Mohamed's site]()
-
-or
-
-[Celina Sheng's site](https://sites.google.com/ualberta.ca/csheng2-cmput-412/exercise-3)
+[Nadeen Mohamed's site](https://sites.google.com/ualberta.ca/nadeen-cmput-412/written-reports/exercise-3) or [Celina Sheng's site](https://sites.google.com/ualberta.ca/csheng2-cmput-412/exercise-3)
 
 
 ## Structure
