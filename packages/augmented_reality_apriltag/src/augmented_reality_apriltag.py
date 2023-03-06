@@ -101,7 +101,7 @@ class ARNode(DTROS):
     )
 
     # Timer
-    self.publish_hz = 10
+    self.publish_hz = 1
     self.timer = rospy.Timer(rospy.Duration(1 / self.publish_hz), self.cb_timer)
     self.last_message = None
 
@@ -190,6 +190,40 @@ class ARNode(DTROS):
         f"at_{str(tag_id)}_static",
       )
       
+      # (first_intermediate_translation, first_intermediate_rotation) = self.listener.lookupTransform(
+      #   f"tag/{str(tag_id)}", 
+      #   "odometry",
+      #   rospy.Time(0),
+      # )
+
+      # self._tf_bcaster.sendTransform(
+      #   first_intermediate_translation,
+      #   first_intermediate_rotation,
+      #   rospy.Time.now(),
+      #   f"first_intermediate_tag/{str(tag_id)}",
+      #   f"odometry",
+      # )
+
+      # (second_intermediate_translation, second_intermediate_rotation) = self.listener.lookupTransform(
+      #   f"at_{str(tag_id)}_static",
+      #   f"first_intermediate_tag/{str(tag_id)}",
+      #   rospy.Time(0),
+      # )
+
+      # self._tf_bcaster.sendTransform(
+      #   second_intermediate_translation,
+      #   second_intermediate_rotation,
+      #   rospy.Time.now(),
+      #   f"second_intermediate_tag/{str(tag_id)}",
+      #   f"first_intermediate_tag/{str(tag_id)}",
+      # )
+
+      # (translation, rotation) = self.listener.lookupTransform(
+      #   f"world",
+      #   f"second_intermediate_tag/{str(tag_id)}",
+      #   rospy.Time(0),
+      # )
+
       transform = Transform(
         translation=Vector3(x=translation[0], y=translation[1], z=translation[2]),
         rotation=Quaternion(x=rotation[0], y=rotation[1], z=rotation[2], w=rotation[3]),

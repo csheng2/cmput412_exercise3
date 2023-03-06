@@ -116,7 +116,7 @@ class DeadReckoningNode(DTROS):
     self.z = message.translation.z
 
     self.q = [message.rotation.x, message.rotation.y, message.rotation.z, message.rotation.w]
-    self.yaw = tr.euler_from_quaternion(self.q)[0]
+    self.yaw = tr.euler_from_quaternion(self.q)[2]
 
   def cb_ts_encoders(self, left_encoder, right_encoder):
     timestamp_now = rospy.get_time()
