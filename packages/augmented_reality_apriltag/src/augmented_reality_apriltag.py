@@ -110,6 +110,10 @@ class ARNode(DTROS):
 
     # Transform listener
     self.listener = tf.TransformListener(True, rospy.Duration(10.0))
+
+    self.transform_publish_hz = 0.5
+    self.timer = rospy.Timer(rospy.Duration(1 / self.transform_publish_hz), self.apply_transform)
+    self.min_tag_id = None
   
   def cb_timer(self, _):
     '''
@@ -129,6 +133,7 @@ class ARNode(DTROS):
     tags_msg = AprilTagDetectionArray()
     tags_msg.header.stamp = msg.header.stamp
     tags_msg.header.frame_id = msg.header.frame_id
+    min_tag_distance = float('inf')
     for tag in tags:
       # turn rotation matrix into quaternion
       q = _matrix_to_quaternion(tag.pose_R)
@@ -156,15 +161,20 @@ class ARNode(DTROS):
         "tag/{:s}".format(str(tag.tag_id)),
         msg.header.frame_id,
       )
-      # apply transformation
-      self.apply_transform(tag.tag_id)
+      distance = tag.pose_t[2][0]
+      if distance < min_tag_distance:
+        self.min_tag_id = tag.tag_id
+        min_tag_distance = distance
       # add detection to array
       tags_msg.detections.append(detection)
     
     # render visualization (if needed)
     self._render_detections(msg, img, tags)
 
-  def apply_transform(self, tag_id):
+  def apply_transform(self, _):
+    if not self.min_tag_id:
+      return
+    tag_id = self.min_tag_id
     try:
       (intermediate_translation, intermediate_rotation) = self.listener.lookupTransformFull(
         f"tag/{str(tag_id)}", 
@@ -190,40 +200,6 @@ class ARNode(DTROS):
         f"at_{str(tag_id)}_static",
       )
       
-      # (first_intermediate_translation, first_intermediate_rotation) = self.listener.lookupTransform(
-      #   f"tag/{str(tag_id)}", 
-      #   "odometry",
-      #   rospy.Time(0),
-      # )
-
-      # self._tf_bcaster.sendTransform(
-      #   first_intermediate_translation,
-      #   first_intermediate_rotation,
-      #   rospy.Time.now(),
-      #   f"first_intermediate_tag/{str(tag_id)}",
-      #   f"odometry",
-      # )
-
-      # (second_intermediate_translation, second_intermediate_rotation) = self.listener.lookupTransform(
-      #   f"at_{str(tag_id)}_static",
-      #   f"first_intermediate_tag/{str(tag_id)}",
-      #   rospy.Time(0),
-      # )
-
-      # self._tf_bcaster.sendTransform(
-      #   second_intermediate_translation,
-      #   second_intermediate_rotation,
-      #   rospy.Time.now(),
-      #   f"second_intermediate_tag/{str(tag_id)}",
-      #   f"first_intermediate_tag/{str(tag_id)}",
-      # )
-
-      # (translation, rotation) = self.listener.lookupTransform(
-      #   f"world",
-      #   f"second_intermediate_tag/{str(tag_id)}",
-      #   rospy.Time(0),
-      # )
-
       transform = Transform(
         translation=Vector3(x=translation[0], y=translation[1], z=translation[2]),
         rotation=Quaternion(x=rotation[0], y=rotation[1], z=rotation[2], w=rotation[3]),

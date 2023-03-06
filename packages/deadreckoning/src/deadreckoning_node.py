@@ -60,7 +60,7 @@ class DeadReckoningNode(DTROS):
     self.y = 0.32
     self.z = 0.0
     self.yaw = math.pi/2
-    self.q = [0.0, 0.0, 0.0, 1.0]
+    self.q = tr.quaternion_from_euler(0, 0, self.yaw)
     self.tv = 0.0
     self.rv = 0.0
 
